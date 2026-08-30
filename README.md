@@ -2,9 +2,9 @@
 
 Demand-Sense is a production-grade data science and data engineering portfolio project for retail and CPG demand planning. The target product forecasts store/SKU demand with calibrated uncertainty, then turns those intervals into newsvendor-style inventory recommendations with quantified business impact.
 
-## Current status
+## Current Status
 
-Milestone 1 is complete: the repository has a runnable scaffold, local platform services, project structure, contribution notes, and documentation stubs. No data generator, CDC connector, lakehouse tables, forecasting model, optimizer, or dashboard has been implemented yet.
+Milestone 2 is complete: the repository has a runnable local platform stack plus a deterministic synthetic retail data generator that creates stores, products, promotions, and transaction-level sales in Postgres. CDC connectors, lakehouse tables, forecasting models, optimizer, and dashboard have not been implemented yet.
 
 ## Target architecture
 
@@ -60,6 +60,18 @@ make up
 make ps
 ```
 
+Seed synthetic retail data into Postgres:
+
+```bash
+make seed
+```
+
+Or customize the generated footprint:
+
+```bash
+make seed SEED_ARGS="--start-date 2025-01-01 --days 365 --stores 12 --skus 50 --seed 42"
+```
+
 Run local checks:
 
 ```bash
@@ -75,6 +87,19 @@ make down
 If a service fails during startup, run `docker compose ps` and `docker compose logs <service-name>`.
 The first startup can take a few minutes while Docker downloads images and health checks wait for dependent services.
 
+## Synthetic Source Data
+
+The milestone 2 generator creates source data under the `retail` schema in Postgres:
+
+| Table | Grain | Purpose |
+| --- | --- | --- |
+| `retail.stores` | One row per store | Store region, format, size, and demand multiplier |
+| `retail.products` | One row per SKU | Product category, brand, price, cost, shelf life, baseline demand, and elasticity |
+| `retail.promotions` | One row per SKU/store campaign | Discount windows and display flags used to lift demand |
+| `retail.sales_transactions` | One row per synthetic checkout transaction | Observed unit sales, revenue, inventory cap, stockout flag, and promotion reference |
+
+Generation is deterministic for a fixed seed and includes weekly seasonality, annual seasonality, payday effects, promotion lift, store-format effects, multiplicative noise, and inventory-capped observed sales. The seed command applies the schema and truncates/reloads the retail tables by default; pass `--append` only when intentionally adding another generated slice.
+
 ## Local services
 
 | Service | Purpose | Local URL |
@@ -87,8 +112,8 @@ The first startup can take a few minutes while Docker downloads images and healt
 
 ## Milestones
 
-1. Repo scaffolding: folder structure, README stub, license, `.gitignore`, Docker Compose, contributing notes.
-2. Synthetic data generator and Postgres schema.
+1. Repo scaffolding: folder structure, README stub, license, `.gitignore`, Docker Compose, contributing notes. Done.
+2. Synthetic data generator and Postgres schema. Done.
 3. CDC/event pipeline into Kafka, with documented fallback only if Debezium is too heavy for local development.
 4. Bronze landing in the lakehouse.
 5. Silver transform and first Great Expectations suite.

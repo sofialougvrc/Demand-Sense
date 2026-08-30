@@ -1,8 +1,9 @@
 VENV ?= .venv
 PYTHON ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
+SEED_ARGS ?=
 
-.PHONY: help setup up down ps logs check format test clean
+.PHONY: help setup up down ps logs seed check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -23,6 +24,9 @@ ps: ## Show local service status.
 
 logs: ## Follow local service logs.
 	docker compose logs -f
+
+seed: ## Seed Postgres with synthetic retail transactions.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.data_generation.seed $(SEED_ARGS)
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .
