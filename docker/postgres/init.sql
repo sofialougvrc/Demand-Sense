@@ -1,0 +1,3 @@
+CREATE SCHEMA IF NOT EXISTS retail;
+
+CREATE PUBLICATION demand_sense_publication FOR ALL TABLES;

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Environment and secrets
+.env
+*.local
+
+# Data and generated artifacts
+data/
+lakehouse/
+artifacts/
+reports/generated/
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Dagster local state
+.dagster/
+dagster_home/
+
+# Streamlit local config
+.streamlit/secrets.toml
