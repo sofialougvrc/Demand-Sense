@@ -72,6 +72,9 @@ Stop services:
 make down
 ```
 
+If a service fails during startup, run `docker compose ps` and `docker compose logs <service-name>`.
+The first startup can take a few minutes while Docker downloads images and health checks wait for dependent services.
+
 ## Local services
 
 | Service | Purpose | Local URL |
