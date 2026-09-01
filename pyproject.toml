@@ -19,6 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
+demand-sense-cdc = "demand_sense.ingestion.cdc:main"
 demand-sense-seed = "demand_sense.data_generation.seed:main"
 
 [project.optional-dependencies]

@@ -3,7 +3,7 @@ PYTHON ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 SEED_ARGS ?=
 
-.PHONY: help setup up down ps logs seed check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -27,6 +27,18 @@ logs: ## Follow local service logs.
 
 seed: ## Seed Postgres with synthetic retail transactions.
 	PYTHONPATH=src $(PYTHON) -m demand_sense.data_generation.seed $(SEED_ARGS)
+
+cdc-register: ## Register or update the Debezium Postgres connector.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.ingestion.cdc register
+
+cdc-status: ## Show Debezium connector status.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.ingestion.cdc status
+
+cdc-delete: ## Delete the Debezium connector.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.ingestion.cdc delete
+
+cdc-topics: ## List Kafka topics from the local broker.
+	docker compose exec -T kafka /kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .
