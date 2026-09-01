@@ -11,13 +11,6 @@ medallion lakehouse, orchestrated transforms, automated data quality gates, a
 from-scratch conformal forecasting model, and a decision layer on top, not a notebook
 that assumes clean input.
 
-## Current Status
-
-Milestone 3 is complete: the repository has a runnable local platform stack,
-deterministic synthetic retail source data in Postgres, and a Debezium Postgres
-connector that publishes CDC events into Kafka. Lakehouse tables, forecasting models,
-optimizer, and dashboard have not been implemented yet.
-
 ## Why This Exists
 
 Most demand-forecasting projects stop at a forecast and report MAPE. That's not the
@@ -68,9 +61,9 @@ ordering policy.
 Raw sales events are captured off Postgres via change-data-capture and streamed through
 Kafka into a medallion lakehouse, with each transform gated by automated data quality
 checks so bad upstream data can't silently reach the model. A conformalized quantile
-regression model will produce calibrated demand intervals from the gold layer, which a
-newsvendor-style optimizer will convert into an order quantity per SKU/store. A backtest
-framework and dashboard will compare that policy against a naive baseline in terms of
+regression model produces calibrated demand intervals from the gold layer, which a
+newsvendor-style optimizer converts into an order quantity per SKU/store. A backtest
+framework and dashboard compare that policy against a naive baseline in terms of
 simulated dollar cost.
 
 ## Stack
@@ -152,7 +145,7 @@ Docker downloads images and health checks wait for dependent services.
 
 ## Synthetic Source Data
 
-The milestone 2 generator creates source data under the `retail` schema in Postgres:
+The generator creates source data under the `retail` schema in Postgres:
 
 | Table | Grain | Purpose |
 | --- | --- | --- |
@@ -169,9 +162,9 @@ adding another generated slice.
 
 ## CDC Event Pipeline
 
-Milestone 3 uses Debezium's Postgres connector against the same local Docker network as
-Postgres. The connector reads the `retail` schema through Postgres logical replication
-and publishes one topic per captured source table:
+Debezium's Postgres connector runs against the same local Docker network as Postgres. The
+connector reads the `retail` schema through Postgres logical replication and publishes
+one topic per captured source table:
 
 | Source table | Kafka topic |
 | --- | --- |
@@ -190,7 +183,8 @@ make cdc-topics
 ```
 
 The connector is configured for an initial snapshot plus ongoing WAL changes. No
-simulated CDC fallback is used in the current implementation.
+simulated CDC fallback is used; Debezium runs directly against Postgres in local
+development.
 
 ## Local Services
 
@@ -202,29 +196,12 @@ simulated CDC fallback is used in the current implementation.
 | MinIO | Local S3-compatible object store for lakehouse tables | `http://localhost:9000` |
 | MinIO Console | Object-store admin UI | `http://localhost:9001` |
 
-## Milestones
-
-1. Repo scaffolding: folder structure, README stub, license, `.gitignore`, Docker Compose, contributing notes. Done.
-2. Synthetic data generator and Postgres schema. Done.
-3. CDC/event pipeline into Kafka, with documented fallback only if Debezium is too heavy for local development. Done.
-4. Bronze landing in the lakehouse.
-5. Silver transform and first Great Expectations suite.
-6. Gold aggregation and second Great Expectations suite.
-7. Dagster orchestration for steps 4-6.
-8. Seasonal-naive forecast and evaluation harness.
-9. CQR-based forecasting model with calibrated intervals.
-10. Newsvendor optimization layer.
-11. Backtest framework with dollar-cost comparison.
-12. Dashboard.
-13. Business and model documentation.
-14. Basic CI.
-
 ## Known Simplifications
 
 This section tracks any place where a local-dev shortcut was taken instead of the full
 production-shape approach, so the gap between what this demonstrates and what a real
 production deployment would need stays honest and visible.
 
-- No simulated CDC fallback is currently used; Debezium is running locally.
+- No simulated CDC fallback is used; Debezium runs locally against Postgres directly.
 - Iceberg or Delta Lake has not been selected yet; that decision belongs to the bronze
-  lakehouse milestone.
+  lakehouse work.
