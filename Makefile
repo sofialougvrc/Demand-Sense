@@ -3,8 +3,9 @@ PYTHON ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 SEED_ARGS ?=
 BRONZE_ARGS ?=
+SILVER_ARGS ?=
 
-.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -46,6 +47,12 @@ bronze-land: ## Land Debezium Kafka events into the bronze Delta table on MinIO.
 
 bronze-inspect: ## Show basic bronze Delta table metadata.
 	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.bronze inspect
+
+silver-build: ## Validate bronze and build cleaned silver CDC events.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.silver build $(SILVER_ARGS)
+
+silver-inspect: ## Show basic silver Delta table metadata.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.silver inspect
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .

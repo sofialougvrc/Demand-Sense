@@ -13,11 +13,11 @@ that assumes clean input.
 
 ## Current Status
 
-Milestone 4 is complete: the repository has a runnable local platform stack,
-deterministic synthetic retail source data in Postgres, Debezium CDC into Kafka, and a
-bronze Delta Lake table on MinIO containing raw CDC envelopes plus Kafka/source metadata.
-Silver/gold transforms, forecasting models, optimizer, and dashboard have not been
-implemented yet.
+Milestone 5 is complete: the repository has a runnable local platform stack,
+deterministic synthetic retail source data in Postgres, Debezium CDC into Kafka, a bronze
+Delta Lake table on MinIO, and a Great Expectations-gated silver Delta table of cleaned,
+deduped CDC events. Gold transforms, forecasting models, optimizer, and dashboard have
+not been implemented yet.
 
 ## Why This Exists
 
@@ -142,6 +142,13 @@ make bronze-land BRONZE_ARGS="--mode overwrite --replay --max-messages 10000"
 make bronze-inspect
 ```
 
+Validate bronze and build cleaned silver CDC events:
+
+```bash
+make silver-build
+make silver-inspect
+```
+
 Run local checks:
 
 ```bash
@@ -224,6 +231,33 @@ make bronze-inspect
 
 Bronze remains intentionally raw. Typing, deduplication, update/delete interpretation,
 and data quality gates begin in the silver milestone.
+
+## Silver Lakehouse
+
+Milestone 5 validates the bronze CDC table with a Great Expectations suite before writing
+silver. Failed expectations raise an error and block the silver write.
+
+```text
+s3://demand-sense/silver/retail_cdc_events
+```
+
+The silver table has one deduped row per Kafka event, keyed by topic, partition, and
+offset. It keeps the raw record payload in canonical JSON while promoting common CDC
+fields to typed columns: source schema/table, operation, event timestamp, source LSN,
+Kafka coordinates, deletion flag, snapshot flag, and load timestamp. It is partitioned by
+`source_table` and `event_date`.
+
+Useful commands:
+
+```bash
+make silver-build
+make silver-build SILVER_ARGS="--mode overwrite"
+make silver-inspect
+```
+
+The bronze-to-silver Great Expectations suite checks required columns, non-null metadata,
+valid source tables, valid CDC operations, JSON parseability, and uniqueness of Kafka
+coordinates.
 
 ## Local Services
 
