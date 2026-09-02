@@ -11,6 +11,14 @@ medallion lakehouse, orchestrated transforms, automated data quality gates, a
 from-scratch conformal forecasting model, and a decision layer on top, not a notebook
 that assumes clean input.
 
+## Current Status
+
+Milestone 4 is complete: the repository has a runnable local platform stack,
+deterministic synthetic retail source data in Postgres, Debezium CDC into Kafka, and a
+bronze Delta Lake table on MinIO containing raw CDC envelopes plus Kafka/source metadata.
+Silver/gold transforms, forecasting models, optimizer, and dashboard have not been
+implemented yet.
+
 ## Why This Exists
 
 Most demand-forecasting projects stop at a forecast and report MAPE. That's not the
@@ -37,7 +45,7 @@ ordering policy.
                  ┌───────────────────────┐
                  │  Lakehouse (MinIO/S3)  │
                  │  bronze → silver → gold│
-                 │  (Iceberg/Delta)       │
+                 │  (Delta Lake)          │
                  └──────────┬────────────┘
                              │ orchestrated by Dagster
                              │ gated by Great Expectations
@@ -73,7 +81,7 @@ simulated dollar cost.
 | Source DB | Postgres | Realistic transactional source for CDC |
 | CDC | Debezium → Kafka | Production-shape change-data-capture, not batch polling |
 | Object storage | MinIO (S3-compatible) | Local dev stand-in for S3 |
-| Table format | Iceberg / Delta Lake | Medallion architecture with schema evolution |
+| Table format | Delta Lake | Medallion architecture with transaction-log metadata |
 | Orchestration | Dagster | Asset-based, testable pipeline definitions |
 | Data quality | Great Expectations | Gates bronze→silver→gold, fails loudly on bad data |
 | Forecasting | LightGBM + custom CQR | Calibrated prediction intervals, not just point estimates |
@@ -125,6 +133,13 @@ Register the Debezium CDC connector and inspect Kafka topics:
 make cdc-register
 make cdc-status
 make cdc-topics
+```
+
+Land CDC events into the bronze Delta table on MinIO:
+
+```bash
+make bronze-land BRONZE_ARGS="--mode overwrite --replay --max-messages 10000"
+make bronze-inspect
 ```
 
 Run local checks:
@@ -186,6 +201,30 @@ The connector is configured for an initial snapshot plus ongoing WAL changes. No
 simulated CDC fallback is used; Debezium runs directly against Postgres in local
 development.
 
+## Bronze Lakehouse
+
+Milestone 4 lands raw Debezium CDC events from Kafka into a Delta Lake table on MinIO:
+
+```text
+s3://demand-sense/bronze/debezium_events
+```
+
+The bronze table preserves the raw Debezium JSON envelope in `debezium_value` and adds
+operational metadata: topic, partition, offset, source schema/table, operation code,
+source LSN, event timestamp, ingest timestamp, and ingest date. It is partitioned by
+`source_table` and `ingest_date`.
+
+Useful commands:
+
+```bash
+make bronze-land
+make bronze-land BRONZE_ARGS="--mode overwrite --replay --max-messages 50000"
+make bronze-inspect
+```
+
+Bronze remains intentionally raw. Typing, deduplication, update/delete interpretation,
+and data quality gates begin in the silver milestone.
+
 ## Local Services
 
 | Service | Purpose | Local URL |
@@ -203,5 +242,5 @@ production-shape approach, so the gap between what this demonstrates and what a 
 production deployment would need stays honest and visible.
 
 - No simulated CDC fallback is used; Debezium runs locally against Postgres directly.
-- Iceberg or Delta Lake has not been selected yet; that decision belongs to the bronze
-  lakehouse work.
+- Delta Lake is used for the local lakehouse table format. A production deployment could
+  revisit Iceberg if a catalog-centered lakehouse is preferred.

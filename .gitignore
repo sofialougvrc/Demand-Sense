@@ -16,7 +16,7 @@ venv/
 
 # Data and generated artifacts
 data/
-lakehouse/
+/lakehouse/
 artifacts/
 reports/generated/
 

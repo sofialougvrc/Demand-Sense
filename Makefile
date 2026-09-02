@@ -2,8 +2,9 @@ VENV ?= .venv
 PYTHON ?= $(VENV)/bin/python
 PIP ?= $(VENV)/bin/pip
 SEED_ARGS ?=
+BRONZE_ARGS ?=
 
-.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -39,6 +40,12 @@ cdc-delete: ## Delete the Debezium connector.
 
 cdc-topics: ## List Kafka topics from the local broker.
 	docker compose exec -T kafka /kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list
+
+bronze-land: ## Land Debezium Kafka events into the bronze Delta table on MinIO.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.bronze land $(BRONZE_ARGS)
+
+bronze-inspect: ## Show basic bronze Delta table metadata.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.bronze inspect
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .

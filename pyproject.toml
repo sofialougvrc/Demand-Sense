@@ -13,12 +13,16 @@ authors = [
   { name = "Sofia Cardenas Garcia" }
 ]
 dependencies = [
+  "confluent-kafka>=2.6",
+  "deltalake>=0.20",
   "numpy>=2.0",
+  "pyarrow>=17.0",
   "psycopg[binary]>=3.2",
   "python-dotenv>=1.0"
 ]
 
 [project.scripts]
+demand-sense-bronze = "demand_sense.lakehouse.bronze:main"
 demand-sense-cdc = "demand_sense.ingestion.cdc:main"
 demand-sense-seed = "demand_sense.data_generation.seed:main"
 
