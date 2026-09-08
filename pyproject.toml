@@ -26,6 +26,7 @@ dependencies = [
 [project.scripts]
 demand-sense-bronze = "demand_sense.lakehouse.bronze:main"
 demand-sense-cdc = "demand_sense.ingestion.cdc:main"
+demand-sense-gold = "demand_sense.lakehouse.gold:main"
 demand-sense-seed = "demand_sense.data_generation.seed:main"
 demand-sense-silver = "demand_sense.lakehouse.silver:main"
 

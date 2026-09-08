@@ -4,8 +4,9 @@ PIP ?= $(VENV)/bin/pip
 SEED_ARGS ?=
 BRONZE_ARGS ?=
 SILVER_ARGS ?=
+GOLD_ARGS ?=
 
-.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect gold-build gold-inspect check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -53,6 +54,12 @@ silver-build: ## Validate bronze and build cleaned silver CDC events.
 
 silver-inspect: ## Show basic silver Delta table metadata.
 	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.silver inspect
+
+gold-build: ## Validate silver and build store/SKU/day gold demand aggregates.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.gold build $(GOLD_ARGS)
+
+gold-inspect: ## Show basic gold Delta table metadata.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.gold inspect
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .
