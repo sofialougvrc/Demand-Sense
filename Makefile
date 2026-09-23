@@ -5,8 +5,9 @@ SEED_ARGS ?=
 BRONZE_ARGS ?=
 SILVER_ARGS ?=
 GOLD_ARGS ?=
+DAGSTER_MODULE ?= demand_sense.orchestration.definitions
 
-.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect gold-build gold-inspect check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect gold-build gold-inspect dagster-dev check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -60,6 +61,9 @@ gold-build: ## Validate silver and build store/SKU/day gold demand aggregates.
 
 gold-inspect: ## Show basic gold Delta table metadata.
 	PYTHONPATH=src $(PYTHON) -m demand_sense.lakehouse.gold inspect
+
+dagster-dev: ## Start the local Dagster UI for lakehouse assets.
+	PYTHONPATH=src $(VENV)/bin/dagster dev -m $(DAGSTER_MODULE)
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .
