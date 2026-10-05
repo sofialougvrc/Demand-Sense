@@ -6,8 +6,9 @@ BRONZE_ARGS ?=
 SILVER_ARGS ?=
 GOLD_ARGS ?=
 DAGSTER_MODULE ?= demand_sense.orchestration.definitions
+BASELINE_ARGS ?=
 
-.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect gold-build gold-inspect dagster-dev check format test clean
+.PHONY: help setup up down ps logs seed cdc-register cdc-status cdc-delete cdc-topics bronze-land bronze-inspect silver-build silver-inspect gold-build gold-inspect dagster-dev forecast-baseline check format test clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-12s %s\n", $$1, $$2}'
@@ -64,6 +65,9 @@ gold-inspect: ## Show basic gold Delta table metadata.
 
 dagster-dev: ## Start the local Dagster UI for lakehouse assets.
 	PYTHONPATH=src $(VENV)/bin/dagster dev -m $(DAGSTER_MODULE)
+
+forecast-baseline: ## Evaluate the seasonal-naive baseline forecast on gold demand.
+	PYTHONPATH=src $(PYTHON) -m demand_sense.forecasting.baseline evaluate $(BASELINE_ARGS)
 
 check: ## Run formatting, linting, and tests.
 	$(PYTHON) -m ruff format --check .
